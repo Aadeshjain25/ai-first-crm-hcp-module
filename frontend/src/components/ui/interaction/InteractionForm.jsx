@@ -1,9 +1,7 @@
 import { useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import {
-  Calendar,
   CheckCircle2,
-  Clock3,
   Loader2,
   Mic,
   Plus,
@@ -330,19 +328,13 @@ export default function InteractionForm() {
               Date
             </label>
 
-            <div className="relative">
-              <input
-                type="date"
-                name="interaction_date"
-                value={formData.interaction_date}
-                onChange={handleChange}
-                className="w-full rounded-2xl border border-slate-300 px-4 py-3.5 pr-11 outline-none focus:ring-2 focus:ring-blue-500"
-              />
-              <Calendar
-                size={17}
-                className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 text-slate-400"
-              />
-            </div>
+            <input
+              type="date"
+              name="interaction_date"
+              value={formData.interaction_date}
+              onChange={handleChange}
+              className="w-full rounded-2xl border border-slate-300 px-4 py-3.5 outline-none focus:ring-2 focus:ring-blue-500"
+            />
           </div>
 
           <div>
@@ -350,19 +342,13 @@ export default function InteractionForm() {
               Time
             </label>
 
-            <div className="relative">
-              <input
-                type="time"
-                name="interaction_time"
-                value={formData.interaction_time}
-                onChange={handleChange}
-                className="w-full rounded-2xl border border-slate-300 px-4 py-3.5 pr-11 outline-none focus:ring-2 focus:ring-blue-500"
-              />
-              <Clock3
-                size={17}
-                className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 text-slate-400"
-              />
-            </div>
+            <input
+              type="time"
+              name="interaction_time"
+              value={formData.interaction_time}
+              onChange={handleChange}
+              className="w-full rounded-2xl border border-slate-300 px-4 py-3.5 outline-none focus:ring-2 focus:ring-blue-500"
+            />
           </div>
         </div>
 
@@ -569,3 +555,5 @@ export default function InteractionForm() {
     </div>
   );
 }
+
+

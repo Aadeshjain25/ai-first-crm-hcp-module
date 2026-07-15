@@ -1,133 +1,78 @@
-# AI-First CRM — HCP Interaction Module
+# AI-First CRM - HCP Interaction Module
 
-An AI-first CRM module for pharmaceutical/healthcare field reps, centered on
-the **Log HCP Interaction** screen. Reps can log a visit either through a
-structured form or a conversational AI chat assistant; a LangGraph agent
-backed by Groq's `llama-3.3-70b-versatile` model extracts structured fields,
-applies edits, and generates summaries, follow-ups, and sales insights.
+This project is an AI-first CRM module for healthcare and life sciences field representatives. It focuses on the HCP interaction workflow, allowing reps to log interactions through either a structured form or a conversational AI assistant.
+
+The app uses a React + Redux frontend, a FastAPI backend, PostgreSQL for persistence, and a LangGraph-powered AI workflow backed by Groq's `llama-3.3-70b-versatile` model.
+
+## What This Project Does
+
+- Log HCP interactions using a structured form
+- Log and edit interactions using a chat-based AI assistant
+- Generate AI summaries for logged interactions
+- Suggest follow-up actions for the rep
+- Generate sales-facing insights from interaction data
+- Show saved interactions in History, Dashboard, and HCP Directory views
 
 ## Tech Stack
 
-| Layer     | Technology |
-|-----------|------------|
-| Frontend  | React, Redux Toolkit, TailwindCSS, Lucide Icons, Vite |
-| Backend   | FastAPI, SQLAlchemy, PostgreSQL |
-| AI        | LangGraph, LangChain, Groq (`llama-3.3-70b-versatile`) |
+| Layer | Technology |
+|---|---|
+| Frontend | React, Redux Toolkit, Vite, Tailwind CSS |
+| Backend | FastAPI, SQLAlchemy |
+| AI Orchestration | LangGraph |
+| LLM | Groq `llama-3.3-70b-versatile` |
+| Database | PostgreSQL |
 
-## Features
+## Core Screens
 
-- **Structured form** — HCP name, interaction type, date/time, attendees /
-  location, topics discussed, materials shared, samples distributed
-  (add/remove chips), observed sentiment, outcomes, and follow-up actions.
-- **Conversational AI chat** — free-text logging ("Log" mode) and free-text
-  editing of the in-progress interaction ("Edit" mode), with auto-scroll,
-  distinct user/assistant/success/error message styling, and a typing
-  indicator.
-- **AI Log Interaction tool** — extracts HCP name, location, products,
-  materials, samples, sentiment, outcome, and follow-up from free text.
-- **AI Edit Interaction tool** — updates only the fields explicitly
-  mentioned in an edit request; every other field is preserved exactly as
-  it was (enforced in code, not just prompted).
-- **AI Summary tool** — always returns exactly 3 bullet points.
-- **AI Follow-up tool** — always returns exactly 3 suggested actions.
-- **AI Insights tool** — returns 3-5 sales-relevant insights.
-- **Dashboard, History, and HCP Directory** — all derived from the same
-  normalized Redux slice backed by `GET /interactions/`, no hardcoded demo
-  data.
+- `Dashboard`: summary metrics and recent interactions
+- `Log Interaction`: structured form + AI chat assistant
+- `History`: saved HCP interaction records
+- `HCP Directory`: derived HCP list based on saved interactions
 
-## Project Architecture
+## LangGraph Tools
+
+The LangGraph agent exposes five tools:
+
+1. `log_interaction`
+   Extracts structured interaction fields from free-text chat input.
+2. `edit_interaction`
+   Applies natural-language edits to the current interaction without blanking unrelated fields.
+3. `summarize_interaction`
+   Generates a 3-bullet interaction summary.
+4. `suggest_follow_up`
+   Suggests 3 next-step actions for the rep.
+5. `generate_insights`
+   Produces sales-relevant insights from the interaction.
+
+## Project Structure
 
 ```text
 ai-first-crm/
 ├── backend/
 │   ├── app/
-│   │   ├── main.py                # FastAPI app, CORS, router registration
-│   │   ├── config.py              # env vars (DATABASE_URL, GROQ_API_KEY, GROQ_MODEL)
-│   │   ├── database.py            # SQLAlchemy engine/session
-│   │   ├── models/interaction.py  # Interaction ORM model
-│   │   ├── schemas/interaction.py # Pydantic request/response schemas
-│   │   ├── routers/               # One router per REST resource
-│   │   │   ├── interaction.py     #   /interactions  (CRUD, persisted to Postgres)
-│   │   │   ├── chat.py            #   /chat          (AI: log interaction)
-│   │   │   ├── edit_chat.py       #   /edit-chat     (AI: edit interaction)
-│   │   │   ├── summary.py         #   /summary       (AI: 3-bullet summary)
-│   │   │   ├── follow_up.py       #   /follow-up     (AI: 3 follow-up actions)
-│   │   │   └── insights.py        #   /insights      (AI: sales insights)
-│   │   ├── agents/agent.py        # run_agent(tool, payload) -> graph.invoke(...)
+│   │   ├── agents/
 │   │   ├── langgraph/
-│   │   │   ├── state.py           # AgentState (tool, payload, response)
-│   │   │   ├── graph.py           # the StateGraph: router -> 5 tool nodes -> END
-│   │   │   └── tools.py           # the 5 tool node implementations
-│   │   └── services/
-│   │       ├── groq_service.py    # ChatGroq client, ask_groq(), parse_json_response()
-│   │       ├── prompts.py         # shared prompt templates for all 5 tools
-│   │       └── agent_runner.py    # run_ai_tool() -> run_agent() + HTTPException mapping
-│   └── requirements.txt
+│   │   ├── models/
+│   │   ├── routers/
+│   │   ├── schemas/
+│   │   ├── services/
+│   │   ├── config.py
+│   │   ├── database.py
+│   │   └── main.py
+│   ├── requirements.txt
+│   └── docker-compose.yml
 ├── frontend/
-│   └── src/
-│       ├── pages/                 # Dashboard, LogInteraction, History, HCPs
-│       ├── components/ui/
-│       │   ├── interaction/       # InteractionForm.jsx, AIChat.jsx
-│       │   ├── layout/            # Sidebar, Header, MainLayout
-│       │   └── dashboard/         # StatCard, RecentInteractions
-│       ├── store/
-│       │   ├── index.js           # configureStore({ interaction, history })
-│       │   └── slices/
-│       │       ├── interactionSlice.js  # in-progress form + AI summary/follow-ups/insights
-│       │       └── historySlice.js      # normalized { ids, entities } interaction list
-│       └── services/api.js        # axios instance + named API functions
+│   ├── public/
+│   ├── src/
+│   │   ├── components/
+│   │   ├── pages/
+│   │   ├── services/
+│   │   └── store/
+│   ├── package.json
+│   └── index.html
 └── README.md
 ```
-
-## AI Flow (LangGraph)
-
-A single compiled `StateGraph` (`app/langgraph/graph.py`) is the one entry
-point for every AI action in the app:
-
-```
-                      ┌────────────────────┐
-   run_agent(tool, ─▶ │       router       │
-   payload)           │ (reads state.tool) │
-                      └─────────┬──────────┘
-                                │ conditional edge on `tool`
-        ┌───────────┬───────────┼────────────┬─────────────┐
-        ▼           ▼           ▼            ▼             ▼
-  log_interaction edit_interaction summarize_interaction suggest_follow_up generate_insights
-        │           │           │            │             │
-        ▼           ▼           ▼            ▼             ▼
-       END         END         END          END           END
-```
-
-- **Router**: an entry node that inspects `state["tool"]` and dispatches to
-  exactly one of the five tool nodes via `add_conditional_edges`.
-- **Each tool is independently callable**: `app.agents.agent.run_agent(tool, payload)`
-  invokes the graph fresh for a single tool and returns its `response`, so
-  routers never touch Groq or the graph directly — the assignment's "each
-  tool must be callable individually" requirement is satisfied by this
-  star/fan-out topology (rather than a strictly linear chain), since the
-  frontend calls Log, Edit, Summary, Follow-up, and Insights as separate
-  steps in its own sequence.
-- **Shared plumbing**: every tool calls `ask_groq()` (never `ChatGroq`
-  directly) and `parse_json_response()` for JSON extraction, both in
-  `app/services/groq_service.py`, and shares prompt wording via
-  `app/services/prompts.py`. Errors (`GroqServiceError`) are translated into
-  clean `HTTPException`s by `app/services/agent_runner.run_ai_tool()`
-  instead of leaking raw tracebacks.
-- **Edit safety**: `edit_interaction_tool` merges the model's suggested
-  changes onto `current_data` in Python and only accepts non-empty values
-  for known fields — so even if the model misbehaves, an edit can never
-  blank out an existing field.
-- **Exact counts enforced in code, not just in the prompt**: `summarize_interaction_tool`
-  always returns exactly 3 bullets and `suggest_follow_up_tool` always
-  returns exactly 3 actions (padding/truncating if the model returns the
-  wrong count).
-
-## Prerequisites
-
-- Node.js 18+ and npm
-- Python 3.10+
-- PostgreSQL 14+ (or Docker, see below)
-- A Groq API key (https://console.groq.com)
 
 ## Environment Variables
 
@@ -136,54 +81,71 @@ Create `backend/.env`:
 ```env
 DATABASE_URL=postgresql://postgres:postgres@localhost:5432/ai_crm
 GROQ_API_KEY=your_groq_api_key
-# Optional — defaults to llama-3.3-70b-versatile (gemma2-9b-it is deprecated on Groq)
 GROQ_MODEL=llama-3.3-70b-versatile
 ```
 
-Create `frontend/.env` (optional — defaults to `http://127.0.0.1:8000`):
+Optional frontend env at `frontend/.env`:
 
 ```env
-VITE_API_URL=http://127.0.0.1:8000
+VITE_API_URL=http://localhost:8000
 ```
 
-## Running PostgreSQL
+If `VITE_API_URL` is not set, the frontend will use the current browser hostname and port `8000`.
 
-The included `backend/docker-compose.yml` starts Postgres (and pgAdmin) with
-matching credentials:
+## How to Run the Project
+
+### 1. Start PostgreSQL
+
+If you want to use Docker:
 
 ```bash
 cd backend
 docker compose up -d
 ```
 
-This exposes Postgres on `localhost:5432` (db `ai_crm`, user/password
-`postgres`/`postgres` — matches the `DATABASE_URL` above) and pgAdmin on
-`http://localhost:5050`. If you already have a local Postgres instance,
-just point `DATABASE_URL` at it instead.
+This starts:
 
-Tables are created automatically on first backend startup
-(`Base.metadata.create_all`) — there's no separate migration step needed for
-a fresh database. If you're upgrading an existing database created before
-this update, add the new `updated_at` column manually:
+- PostgreSQL on `localhost:5432`
+- pgAdmin on `http://localhost:5050`
 
-```sql
-ALTER TABLE interactions ADD COLUMN updated_at TIMESTAMPTZ DEFAULT now();
-```
+### 2. Start the Backend
 
-## Running the Backend
+From the project root:
 
 ```bash
 cd backend
 python -m venv venv
-source venv/bin/activate   # Windows: venv\Scripts\activate
+```
+
+Activate the environment:
+
+Windows:
+
+```bash
+venv\Scripts\activate
+```
+
+macOS/Linux:
+
+```bash
+source venv/bin/activate
+```
+
+Install dependencies and run the API:
+
+```bash
 pip install -r requirements.txt
 uvicorn app.main:app --reload
 ```
 
-API runs at `http://127.0.0.1:8000`; interactive docs at
-`http://127.0.0.1:8000/docs`.
+Backend URLs:
 
-## Running the Frontend
+- API root: `http://localhost:8000/`
+- Swagger docs: `http://localhost:8000/docs`
+
+### 3. Start the Frontend
+
+In a second terminal:
 
 ```bash
 cd frontend
@@ -191,26 +153,51 @@ npm install
 npm run dev
 ```
 
-App runs at `http://localhost:5173`.
+Frontend URL:
 
-## API Reference
+- `http://localhost:5173`
 
-| Method | Path                     | Purpose                                             |
-|--------|--------------------------|------------------------------------------------------|
-| POST   | `/interactions/`         | Persist a finished interaction to PostgreSQL         |
-| GET    | `/interactions/`         | List all interactions (used by History/Dashboard/HCPs)|
-| GET    | `/interactions/{id}`     | Fetch a single interaction                           |
-| POST   | `/chat/`                 | AI: extract interaction fields from free text        |
-| POST   | `/edit-chat/`             | AI: apply a natural-language edit                    |
-| POST   | `/summary/`               | AI: exactly 3-bullet summary                         |
-| POST   | `/follow-up/`             | AI: exactly 3 follow-up actions                       |
-| POST   | `/insights/`              | AI: 3-5 sales insights                                |
+## API Endpoints
 
-## Known Limitations
+| Method | Endpoint | Purpose |
+|---|---|---|
+| `POST` | `/interactions/` | Save a completed interaction |
+| `GET` | `/interactions/` | Fetch all interactions |
+| `GET` | `/interactions/{id}` | Fetch one interaction |
+| `POST` | `/chat/` | AI log interaction |
+| `POST` | `/edit-chat/` | AI edit interaction |
+| `POST` | `/summary/` | AI summary generation |
+| `POST` | `/follow-up/` | AI follow-up suggestions |
+| `POST` | `/insights/` | AI insight generation |
 
-- Voice note capture is consent-gated but text-based (paste/type a
-  transcript) — there's no microphone/audio-to-text pipeline in this build.
-- The HCP Directory and Dashboard stats are derived client-side from the
-  interaction list rather than dedicated backend aggregation endpoints;
-  fine at demo scale, but would move server-side for large datasets.
-- No authentication/authorization layer — out of scope for this assignment.
+## Notes for Demo / Submission
+
+- The main assignment focus is the `Log Interaction` workflow.
+- History, Dashboard, and HCP Directory are powered by the same saved interaction dataset.
+- The AI flow is orchestrated through one LangGraph graph with independently callable tools.
+
+## Troubleshooting
+
+### History page shows a network error
+
+Check the following:
+
+- Backend is running on `http://localhost:8000`
+- Frontend is running on `http://localhost:5173`
+- PostgreSQL is running and `DATABASE_URL` is valid
+- `GROQ_API_KEY` is present in `backend/.env`
+
+### CORS error in browser
+
+Make sure you are opening the frontend on `localhost:5173` and the backend on `localhost:8000`.
+
+### Backend starts but `/interactions/` fails
+
+This usually means the database is unavailable or the connection string is incorrect.
+
+## Current Limitations
+
+- No authentication/authorization layer
+- Voice note support is transcript-based, not real audio recording
+- Dashboard metrics are derived from saved interactions rather than dedicated analytics endpoints
+
